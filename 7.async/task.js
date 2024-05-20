@@ -4,26 +4,20 @@ class AlarmClock {
         this.intervalId = null;
     }
 
-    checkAlarmExistence = (time) => {
-        return this.alarmCollection.some((alarm) => alarm.time === time);
-    }
-
     addClock(time, callback) {
         if (!time || !callback) {
             throw new Error('Отсутствуют обязательные аргументы');
         }
 
-        if (this.checkAlarmExistence(time)) {
+        if (this.alarmCollection.some((alarm) => alarm.time === time)) {
             console.warn('Уже присутствует звонок на это же время');
         }
 
-        let alarmObject = {
+        this.alarmCollection.push({
             callback, 
             time, 
             canCall: true
-        }
-
-        this.alarmCollection.push(alarmObject);
+        });
         
     }
 
@@ -32,11 +26,10 @@ class AlarmClock {
     }
 
     getCurrentFormattedTime() {
-        let currentDate = new Date()
-        let currentHours = String(currentDate).split(' ')[4].split(':')[0];
-        let currentMins = String(currentDate).split(' ')[4].split(':')[1];
-
-        return `${currentHours}:${currentMins}`;
+        return new Date().toLocaleTimeString("ru-Ru", {
+            hour: "2-digit",
+            minute: "2-digit",
+        });
     }
 
     start() {
@@ -46,10 +39,7 @@ class AlarmClock {
 
         function alarmsChecker() {
             this.alarmCollection.forEach(alarm => {
-                let currentDate = new Date()
-                let currentHours = String(currentDate).split(' ')[4].split(':')[0];
-                let currentMins = String(currentDate).split(' ')[4].split(':')[1];
-                let currentTime = `${currentHours}:${currentMins}`;
+                let currentTime = this.getCurrentFormattedTime();
                 
                 if(alarm.time === currentTime && alarm.canCall) {
                     alarm.canCall = false;
@@ -58,7 +48,9 @@ class AlarmClock {
             })
         }
 
-        this.intervalId = setInterval(alarmsChecker, 1000);
+        const bindedAlarmsChecker = alarmsChecker.bind(this);
+
+        this.intervalId = setInterval(bindedAlarmsChecker, 1000);
     }
 
     stop() {
